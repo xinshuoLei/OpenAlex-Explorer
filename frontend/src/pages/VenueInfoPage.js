@@ -39,58 +39,14 @@ ChartJS.register(
 export const VenueInfoPage = () => {
 
     let { id }= useParams();
+    const venue_id = "https://openalex.org/" + id;
     const navigate = useNavigate();
 
-    const venueInfo = {display_name: id, 
-                       ISSN: 123,
-                       publisher: "unknown",
-                       works_count: 100,
-                       cited_by_count: 200,
-                       is_oa: true,
-                       is_in_doaj: true}
+    const [venueInfo, setVenueInfo] = useState(false)
+    const [topWorks, setTopWorks] = useState(false)   
+    const [topAuthors, setTopAuthors] = useState(false)
+    const [venueStats, setVenueStats] = useState(false)
 
-    const institution = {display_name: "Insitution 1", id: "institution1"}
-
-    const ancestors = [{display_name: "Ancestor concept 1", id: "concept1"}, 
-                       {display_name: "Ancestor concept 2", id: "concept2"}, 
-                       {display_name: "Ancestor concept 3", id: "concept3"}]
-
-    const researchConcepts = [{display_name: "Concept 4", id: "concept4"}, 
-                              {display_name: "Concept 5", id: "concept5"}, 
-                              {display_name: "Concept 6", id: "concept6"},
-                              {display_name: "Concept 7", id: "concept7"},
-                              {display_name: "Concept 8", id: "concept8"}]
-
-    const topWorks = [{display_name: "Work 1", id: "work1"}, 
-                      {display_name: "Work 2", id: "work2"}, 
-                      {display_name: "Work 3", id: "work3"},
-                      {display_name: "Work 4", id: "work4"},
-                      {display_name: "Work 5", id: "work5"}]
-    
-    const topAuthors = [{display_name: "Author 1", id: "author1"}, 
-                        {display_name: "Author 2", id: "author2"}, 
-                        {display_name: "Author 3", id: "author3"},
-                        {display_name: "Author 4", id: "author4"},
-                        {display_name: "Author 5", id: "author5"}]
-
-    const labels = ["2019", "2020", "2021", "2022"]
-    const venueStats = {
-        labels,
-        datasets: [
-            {
-                label: 'cited by count',
-                data: [30, 50, 62, 20],
-                borderColor: 'rgb(53, 162, 235)',
-                backgroundColor: 'rgba(53, 162, 235, 0.5)',
-            },
-            {
-                label: 'works count',
-                data: [60, 91, 40, 73],
-                borderColor: 'rgb(144, 238, 144)',
-                backgroundColor: 'rgba(144, 238, 144, 0.5)',
-            }  
-        ]
-    }
     const options = {
         responsive: true,
         plugins: {
@@ -105,6 +61,74 @@ export const VenueInfoPage = () => {
         maintainAspectRatio: false
     }
 
+    useEffect(() => {
+        getVenueInfo()
+        getTopWorks()
+        getTopAuthors()
+        getStats()
+    }, [id]);
+
+    const getVenueInfo = () => {
+        fetch( `http://localhost:3001/venue_info?id=${venue_id}`)
+        .then(response => {
+            return response.text();
+        })
+        .then(data => {
+            setVenueInfo(JSON.parse("[" + data + "]")[0][0]);
+        });
+    }
+
+    const getTopWorks = () => {
+        fetch( `http://localhost:3001/venue_top_works?id=${venue_id}`)
+        .then(response => {
+            return response.text();
+        })
+        .then(data => {
+            setTopWorks(JSON.parse("[" + data + "]")[0]);
+        });
+    }
+
+    const getTopAuthors = () => {
+        fetch( `http://localhost:3001/venue_top_authors?id=${venue_id}`)
+        .then(response => {
+            return response.text();
+        })
+        .then(data => {
+            setTopAuthors(JSON.parse("[" + data + "]")[0]);
+        });
+    }
+
+    const getStats = () => {
+        fetch( `http://localhost:3001/venue_stats?id=${venue_id}`)
+          .then(response => {
+            return response.text();
+          })
+          .then(data => {
+            const rawStats = JSON.parse(data)
+            const labels = rawStats.years
+            const works_count = rawStats.works_count
+            const cited_by_count = rawStats.cited_by_count
+            const formattedStats = {
+                labels,
+                datasets: [
+                    {
+                        label: 'cited by count',
+                        data: cited_by_count,
+                        borderColor: 'rgb(53, 162, 235)',
+                        backgroundColor: 'rgba(53, 162, 235, 0.5)',
+                    },
+                    {
+                        label: 'works count',
+                        data: works_count,
+                        borderColor: 'rgb(144, 238, 144)',
+                        backgroundColor: 'rgba(144, 238, 144, 0.5)',
+                    }  
+                ]
+            }
+            //console.log(formattedStats)
+            setVenueStats(formattedStats)
+          });
+    }
 
     return (
         <Box sx={{ display: 'flex'}} >
@@ -127,7 +151,7 @@ export const VenueInfoPage = () => {
               marginTop={15}
               marginBottom={10}
           > 
-        { venueInfo ? (
+        { venueInfo && venueStats ? (
             <Box
                 display="flex"
                 flexDirection="column"
@@ -153,13 +177,13 @@ export const VenueInfoPage = () => {
                     <Box sx={{boxShadow: 4,
                             borderRadius: 2, 
                             minHeight: "55vh", 
-                            width: "25vw", 
-                            marginRight: 5,
+                            width: "20vw", 
+                            marginRight: 4,
                             display: "flex",
                             flexDirection: "column"}}>
                         <Typography marginTop={2} mx="auto" marginBottom={3} fontFamily="monospace">Venue Info</Typography>
                         <Typography fontSize={14} ml="2vw" mb={2} fontFamily="monospace">
-                            • ISSN: {venueInfo.ISSN}
+                            • ISSN-L: {venueInfo.issn_l}
                         </Typography>
                         <Typography fontSize={14} ml="2vw" mb={2} fontFamily="monospace">
                             • works count: {venueInfo.works_count}
@@ -177,8 +201,9 @@ export const VenueInfoPage = () => {
                     <Box sx={{boxShadow: 4,
                             borderRadius: 2, 
                             minHeight: "55vh", 
-                            width: "23vw", 
+                            width: "30vw", 
                             marginRight: 4,
+                            pb: 2,
                             display: "flex",
                             flexDirection: "column"}}>
                         <Typography marginTop={2} mx="auto" marginBottom={3} fontFamily="monospace">Top works</Typography>
@@ -187,6 +212,7 @@ export const VenueInfoPage = () => {
                                                 fontFamily="monospace"
                                                 fontSize={14}
                                                 ml = "2vw"
+                                                mr = "2vw"
                                                 marginBottom={1}
                                                 underline="hover"
                                                 onClick={() => navigate(`/work_info/${x.id.replace("https://openalex.org/", "")}`)}
@@ -203,7 +229,7 @@ export const VenueInfoPage = () => {
                     <Box sx={{boxShadow: 4,
                             borderRadius: 2, 
                             minHeight: "55vh", 
-                            width: "23vw", 
+                            width: "20vw", 
                             display: "flex",
                             flexDirection: "column"}}>
                         <Typography marginTop={2} mx="auto" marginBottom={3} fontFamily="monospace">Top authors</Typography>

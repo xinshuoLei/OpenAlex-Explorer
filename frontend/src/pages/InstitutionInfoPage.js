@@ -40,67 +40,84 @@ export const InstitutionInfoPage = () => {
 
     let { id }= useParams();
     const navigate = useNavigate();
+    const institution_id = "https://openalex.org/" + id;
+    const image_placeholder = "https://upload.wikimedia.org/wikipedia/commons/6/65/No-Image-Placeholder.svg"
 
-    const institutionInfo = { ror: 123,
-                              display_name: id, 
-                              works_count: 100,
-                              type: "Education",
-                              cited_by_count: 200, 
-                              location: "unknown",
-                              image_url: "https://upload.wikimedia.org/wikipedia/commons/6/65/No-Image-Placeholder.svg"
-                            }
-    const ancestors = [{display_name: "Ancestor concept 1", id: "concept1"}, 
-                       {display_name: "Ancestor concept 2", id: "concept2"}, 
-                       {display_name: "Ancestor concept 3", id: "concept3"}]
 
-    const topConcepts = [{display_name: "Concept 4", id: "concept4"}, 
-                             {display_name: "Concept 5", id: "concept5"}, 
-                             {display_name: "Concept 6", id: "concept6"},
-                             {display_name: "Concept 7", id: "concept7"},
-                             {display_name: "Concept 8", id: "concept8"}]
+    const [institutionInfo, setInstitutionInfo] = useState(false);
+    const [topAuthors, setTopAuthors] = useState(false)
+    const [institutionStats, setInstitutionStats] = useState(false)
+    const [topConcepts, setTopConcepts] = useState(false)
+   
 
-    const topWorks = [{display_name: "Work 1", id: "work1"}, 
-                      {display_name: "Work 2", id: "work2"}, 
-                      {display_name: "Work 3", id: "work3"},
-                      {display_name: "Work 4", id: "work4"},
-                      {display_name: "Work 5", id: "work5"}]
-    
-    const topAuthors = [{display_name: "Author 1", id: "author1"}, 
-                        {display_name: "Author 2", id: "author2"}, 
-                        {display_name: "Author 3", id: "author3"},
-                        {display_name: "Author 4", id: "author4"},
-                        {display_name: "Author 5", id: "author5"}]
+    useEffect(() => {
+        getInstitutionInfo();
+        getTopAuthors();
+        getTopConcepts();
+        getStats();
+    }, []);
 
-    const topVenues = [{display_name: "Venue 1", id: "venue1"}, 
-                       {display_name: "Venue 2", id: "venue2"}, 
-                       {display_name: "Venue 3", id: "venue3"},
-                       {display_name: "Venue 4", id: "venue4"},
-                       {display_name: "Venue 5", id: "venue5"}]
-
-    const topInstitutions = [{display_name: "Institution 1", id: "instituion1"}, 
-                             {display_name: "Institution 2", id: "instituion2"}, 
-                             {display_name: "Institution 3", id: "instituion3"},
-                             {display_name: "Institution 4", id: "instituion4"},
-                             {display_name: "Institution 5", id: "instituion5"}]
-    
-    const labels = ["2019", "2020", "2021", "2022"]
-    const conceptsStats = {
-        labels,
-        datasets: [
-            {
-                label: 'cited by count',
-                data: [30, 50, 62, 20],
-                borderColor: 'rgb(53, 162, 235)',
-                backgroundColor: 'rgba(53, 162, 235, 0.5)',
-            },
-            {
-                label: 'works count',
-                data: [60, 91, 40, 73],
-                borderColor: 'rgb(144, 238, 144)',
-                backgroundColor: 'rgba(144, 238, 144, 0.5)',
-            }  
-        ]
+    const getInstitutionInfo = () => {
+        fetch( `http://localhost:3001/institution_info?id=${institution_id}`)
+          .then(response => {
+            return response.text();
+          })
+          .then(data => {
+            setInstitutionInfo(JSON.parse("[" + data + "]")[0][0]);
+          });
     }
+    
+    const getTopAuthors = () => {
+        fetch( `http://localhost:3001/institution_top_author?id=${institution_id}`)
+          .then(response => {
+            return response.text();
+          })
+          .then(data => {
+            setTopAuthors(JSON.parse("[" + data + "]")[0]);
+          });
+    }
+
+    const getTopConcepts = () => {
+        fetch( `http://localhost:3001/institution_top_concept?id=${institution_id}`)
+          .then(response => {
+            return response.text();
+          })
+          .then(data => {
+            setTopConcepts(JSON.parse("[" + data + "]")[0]);
+          });
+    }
+
+    const getStats = () => {
+        fetch( `http://localhost:3001/institution_stats?id=${institution_id}`)
+          .then(response => {
+            return response.text();
+          })
+          .then(data => {
+            const rawStats = JSON.parse(data)
+            const labels = rawStats.years
+            const works_count = rawStats.works_count
+            const cited_by_count = rawStats.cited_by_count
+            const formattedStats = {
+                labels,
+                datasets: [
+                    {
+                        label: 'cited by count',
+                        data: cited_by_count,
+                        borderColor: 'rgb(53, 162, 235)',
+                        backgroundColor: 'rgba(53, 162, 235, 0.5)',
+                    },
+                    {
+                        label: 'works count',
+                        data: works_count,
+                        borderColor: 'rgb(144, 238, 144)',
+                        backgroundColor: 'rgba(144, 238, 144, 0.5)',
+                    }  
+                ]
+            }
+            setInstitutionStats(formattedStats)
+          });
+    }
+    
     const options = {
         responsive: true,
         plugins: {
@@ -109,7 +126,7 @@ export const InstitutionInfoPage = () => {
           },
           title: {
             display: true,
-            text: 'Concept Stats',
+            text: 'Institution Stats',
           },
         },
         maintainAspectRatio: false
@@ -137,7 +154,7 @@ export const InstitutionInfoPage = () => {
               marginTop={15}
               marginBottom={10}
           > 
-        { institutionInfo ? (
+        { institutionInfo && institutionStats ? (
             <Box
                 display="flex"
                 flexDirection="column"
@@ -172,14 +189,29 @@ export const InstitutionInfoPage = () => {
                         height="100%"
                         padding={2}
                         flexDirection="column">
-                            <Typography variant="h7" fontFamily="monospace"  marginBottom={3}>ror: {institutionInfo.ror}</Typography>
-                            <Typography variant="h7" fontFamily="monospace"  marginBottom={3}>location: {institutionInfo.location}</Typography>
-                            <Typography variant="h7" fontFamily="monospace"  marginBottom={3}>type: {institutionInfo.type}</Typography>
-                            <Typography variant="h7" fontFamily="monospace"  marginBottom={3}>works count: {institutionInfo.works_count}</Typography>
-                            <Typography variant="h7" fontFamily="monospace"  marginBottom={3}>cited by count: {institutionInfo.cited_by_count}</Typography>
+                            <Typography variant="h7" fontFamily="monospace"  marginBottom={3}>
+                                <Typography fontWeight="bold" display="inline" variant="h7" fontFamily="monospace">ror: </Typography>
+                                {institutionInfo.ror}
+                            </Typography>
+                            <Typography variant="h7" fontFamily="monospace"  marginBottom={3}>
+                                <Typography fontWeight="bold" display="inline" variant="h7" fontFamily="monospace">location: </Typography>
+                                {institutionInfo.country ? institutionInfo.country + ", " + institutionInfo.region : "unknown"}
+                            </Typography>
+                            <Typography variant="h7" fontFamily="monospace"  marginBottom={3}>
+                                <Typography fontWeight="bold" display="inline" variant="h7" fontFamily="monospace">type: </Typography>
+                                {institutionInfo.type}
+                            </Typography>
+                            <Typography variant="h7" fontFamily="monospace"  marginBottom={3}>
+                                <Typography fontWeight="bold" display="inline" variant="h7" fontFamily="monospace">works count: </Typography>
+                                {institutionInfo.works_count}
+                            </Typography>
+                            <Typography variant="h7" fontFamily="monospace"  marginBottom={3}>
+                                <Typography fontWeight="bold" display="inline" variant="h7" fontFamily="monospace">cited by count: </Typography>
+                                {institutionInfo.cited_by_count}
+                            </Typography>
                         </Box>
                     </Box>
-                    <Image duration={0} fit="contain"  width="17vw"  src={institutionInfo.image_url}/>
+                    <Image duration={0} fit="contain"  width="17vw"  src={institutionInfo.image_url? institutionInfo.image_url : image_placeholder}/>
                     <Typography></Typography>
                 </Box>
                 <Box display="flex"
@@ -196,6 +228,7 @@ export const InstitutionInfoPage = () => {
                             flexDirection: "column"}}>
                         <Typography marginTop={2} mx="auto" marginBottom={3} fontFamily="monospace">Top concepts</Typography>
                         {topConcepts? 
+                        topConcepts.length != 0 ? 
                         topConcepts.map(x => <Link
                                                     fontFamily="monospace"
                                                     fontSize={14}
@@ -204,7 +237,8 @@ export const InstitutionInfoPage = () => {
                                                     underline="hover"
                                                     onClick={() => navigate(`/concept_info/${x.id.replace("https://openalex.org/", "")}`)}
                                                 >	• {x.display_name}
-                                                </Link>)
+                                                </Link>) : 
+                        <Typography fontFamily="monospace" mx="auto">No concepts associated with this institution</Typography>
                         : <Typography
                             fontFamily="monospace"
                             fontSize={14}
@@ -221,6 +255,7 @@ export const InstitutionInfoPage = () => {
                             flexDirection: "column"}}>
                         <Typography marginTop={2} mx="auto" marginBottom={3} fontFamily="monospace">Top authors</Typography>
                         {topAuthors? 
+                         topAuthors.length != 0? 
                          topAuthors.map(x => <Link
                                                 fontFamily="monospace"
                                                 fontSize={14}
@@ -229,7 +264,8 @@ export const InstitutionInfoPage = () => {
                                                 underline="hover"
                                                 onClick={() => navigate(`/author_info/${x.id.replace("https://openalex.org/", "")}`)}
                                             >	• {x.display_name}
-                                            </Link>)
+                                            </Link>) : 
+                                            <Typography fontFamily="monospace" mx="auto">No Authors available in this institution</Typography>
                         : <Typography
                             fontFamily="monospace"
                             fontSize={14}
@@ -246,7 +282,7 @@ export const InstitutionInfoPage = () => {
                 >
                     <Box boxShadow={4} width="70vw" display="flex" justifyContent="center" padding={3} borderRadius={2}>
                         <Box width="65vw" height="70vh">
-                            <Line data={conceptsStats} options={options} />
+                            <Line data={institutionStats} options={options} />
                         </Box>
                     </Box>
                 </Box>

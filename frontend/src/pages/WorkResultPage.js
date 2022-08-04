@@ -24,34 +24,27 @@ import { fontFamily } from '@mui/system';
 import { WorkCard } from '../components/WorkCard';
 
 export const WorkResultPage = () => {
-    const searchResult = [{display_name: "Work 1", id: "work1", author: "Author 1"},
-                          {display_name: "Work 2", id: "work2", author: "Author 2, Author 4"},
-                          {display_name: "Work 3", id: "work3", author: "Author 3"},
-                          {display_name: "Work 4", id: "work4", author: "Author 1"},
-                          {display_name: "Work 5", id: "work5", author: "Author 6, Author 2, Author 9"},
-                          {display_name: "Work 6", id: "work6", author: "Author 8"},
-                          {display_name: "Work 7", id: "work7", author: "Author 4"},
-                          {display_name: "Work 8", id: "work8", author: "Author 3"},
-                          {display_name: "Work 9", id: "work9", author: "Author 9"},
-                          {display_name: "Work 10", id: "work10", author: "Author 10"}]
+  const [searchResult, setSearchResult] = useState(false)
+  const [filteredResult,  setFilteredResult] = useState(false)
 
-    const workTypes = [{id:"book-section",label:"Book Section"}, {id:"monograph",label:"Monograph"},
-                       {id:"report",label:"Report"},{id:"peer-review",label:"Peer Review"},
-                       {id:"book-track",label:"Book Track"},{id:"journal-article",label:"Journal Article"},
-                       {id:"book-part",label:"Part"},{id:"other",label:"Other"},{id:"book",label:"Book"},
-                       {id:"journal-volume",label:"Journal Volume"},{id:"book-set",label:"Book Set"},
-                       {id:"reference-entry",label:"Reference Entry"},{id:"proceedings-article",label:"Proceedings Article"},
-                       {id:"journal",label:"Journal"},{id:"component",label:"Component"},
-                       {id:"book-chapter",label:"Book Chapter"},{id:"proceedings-series",label:"Proceedings Series"},
-                       {id:"report-series",label:"Report Series"},{id:"proceedings",label:"Proceedings"},
-                       {id:"standard",label:"Standard"},{id:"reference-book",label:"Reference Book"},
-                       {id:"posted-content",label:"Posted Content"},{id:"journal-issue",label:"Journal Issue"},
-                       {id:"dissertation",label:"Dissertation"},{id:"grant",label:"Grant"},{id:"dataset",label:"Dataset"},
-                       {id:"book-series",label:"Book Series"},{id:"edited-book",label:"Edited Book"},
-                       {id:"standard-series",label:"Standard Series"}]
+  const workTypes = [{id:"book-section",label:"Book Section"}, {id:"monograph",label:"Monograph"},
+                      {id:"report",label:"Report"},{id:"peer-review",label:"Peer Review"},
+                      {id:"book-track",label:"Book Track"},{id:"journal-article",label:"Journal Article"},
+                      {id:"book-part",label:"Part"},{id:"other",label:"Other"},{id:"book",label:"Book"},
+                      {id:"journal-volume",label:"Journal Volume"},{id:"book-set",label:"Book Set"},
+                      {id:"reference-entry",label:"Reference Entry"},{id:"proceedings-article",label:"Proceedings Article"},
+                      {id:"journal",label:"Journal"},{id:"component",label:"Component"},
+                      {id:"book-chapter",label:"Book Chapter"},{id:"proceedings-series",label:"Proceedings Series"},
+                      {id:"report-series",label:"Report Series"},{id:"proceedings",label:"Proceedings"},
+                      {id:"standard",label:"Standard"},{id:"reference-book",label:"Reference Book"},
+                      {id:"posted-content",label:"Posted Content"},{id:"journal-issue",label:"Journal Issue"},
+                      {id:"dissertation",label:"Dissertation"},{id:"grant",label:"Grant"},{id:"dataset",label:"Dataset"},
+                      {id:"book-series",label:"Book Series"},{id:"edited-book",label:"Edited Book"},
+                      {id:"standard-series",label:"Standard Series"}]
 
     const location = useLocation();
     const key = location.state.key;
+    const searchField = location.state.field;
 
     const [sortField, setSortField] = useState("relevant")
     const handleSortFieldChange = (event) => {
@@ -63,7 +56,20 @@ export const WorkResultPage = () => {
       setType(event.target.value);
     };
 
+    useEffect(() => {
+      performSearch();
+    }, []);
   
+    const performSearch = () => {
+      fetch( `http://localhost:3001/work_result?key=${encodeURIComponent(key)}&field=${searchField}`)
+        .then(response => {
+          return response.text();
+        })
+        .then(data => {
+          setSearchResult(JSON.parse("[" + data + "]")[0]);
+          setFilteredResult(JSON.parse("[" + data + "]")[0]);
+        });
+    }
 
     return (
         <Box sx={{ display: 'flex'}} >
@@ -91,11 +97,11 @@ export const WorkResultPage = () => {
                   <Typography variant="h5" fontFamily="monospace">Seach results for "{key}"</Typography>
                   <Box display="flex" flexDirection="row" justifyContent="center" width="100%">
                     <Box width="40vw">
-                      {searchResult? 
-                      searchResult.map(x => <WorkCard
+                      {filteredResult? 
+                      filteredResult.map(x => <WorkCard
                                               name={x.display_name} 
                                               id={x.id}
-                                              author={x.author? x.author : "author info unavailable"}/>)
+                                              type={x.type? x.type : "type info unavailable"}/>)
                       : <Typography
                           fontFamily="monospace"
                           fontSize={14}

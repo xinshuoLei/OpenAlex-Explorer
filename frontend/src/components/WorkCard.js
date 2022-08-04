@@ -11,7 +11,7 @@ import {
 } from '@mui/material'
 import { useNavigate } from 'react-router-dom';
 
-export const WorkCard = ({id, name, author}) => {
+export const WorkCard = ({id, name, type}) => {
     const navigate = useNavigate()
     return (
         <Box 
@@ -22,8 +22,8 @@ export const WorkCard = ({id, name, author}) => {
             py={2}
             marginTop={5}
             >
-            <Link variant="h6" fontFamily="monospace" onClick={() => navigate(`/work_info/${id.replace("https://openalex.org/", "")}`)}>{name}</Link>
-            <Typography fontFamily="monospace" color="gray" marginTop={1}>{author}</Typography>
+            <Link variant="h7" fontFamily="monospace" onClick={() => navigate(`/work_info/${id.replace("https://openalex.org/", "")}`)}>{name}</Link>
+            <Typography fontFamily="monospace" color="gray" marginTop={1}>{type}</Typography>
         </Box>
     )
 }

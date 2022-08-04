@@ -10,6 +10,8 @@ import {
   MenuItem,
   Select,
   Link,
+  Tab,
+  Tabs,
   TextField,
   FormControl,
 } from '@mui/material'
@@ -18,22 +20,38 @@ import SearchIcon from "@mui/icons-material/Search";
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom';
+import { AuthorCard } from '../components/AuthorCard'
 
 
 export const AuthorPage = () => {
 
   const navigate = useNavigate();
-  const popularAuthors = [{display_name: "Author 1", id: "author1"}, 
-                          {display_name: "Author 2", id: "author2"}, 
-                          {display_name: "Author 3", id: "author3"},
-                          {display_name: "Author 4", id: "author4"},
-                          {display_name: "Author 5", id: "author5"}]
+  const [popularAuthors, setPopularAuthors] = useState(false)
 
   const { register, handleSubmit } = useForm()
-  const [ searchField, setSearchField ] = useState("")
+  const [ searchField, setSearchField ] = useState("display_name")
   const handleSearchFieldChange = (event) => {
     setSearchField(event.target.value);
   };
+
+  const [ tabValue, setTabValue ] = useState("search")
+  const handleTabChange = (event, newValue) => {
+    setTabValue(newValue)
+  }
+
+  useEffect(() => {
+    getPopularAuthors();
+  }, []);
+
+  const getPopularAuthors = () => {
+    fetch( `http://localhost:3001/trending_authors`)
+      .then(response => {
+        return response.text();
+      })
+      .then(data => {
+        setPopularAuthors(JSON.parse("[" + data + "]")[0]);
+      });
+  }
 
   const SearchBar = () => (
     <form onSubmit={handleSubmit(performSearch)}>
@@ -44,12 +62,12 @@ export const AuthorPage = () => {
           id="demo-simple-select"
           label="Search field"
           value={searchField}
-          style={{width: "10vw", height: "5.5vh", marginRight: "2vw"}}
+          style={{width: "10vw", height: "42px", marginRight: "2vw"}}
           onChange={handleSearchFieldChange}
         >
-          <MenuItem value={"name"}>name</MenuItem>
-          <MenuItem value={"alternative_name"}>alternative_name</MenuItem>
-          <MenuItem value={"both"}>both</MenuItem>
+          <MenuItem value={"display_name"}>name</MenuItem>
+          <MenuItem value={"display_name_alternatives"}>alternative name</MenuItem>
+          {/*<MenuItem value={"both"}>both</MenuItem>*/}
         </Select>
       </FormControl>
       <TextField
@@ -70,7 +88,7 @@ export const AuthorPage = () => {
   const performSearch = (data) => {
     console.log(data.key)
     const searchKey = data.key;
-    navigate("/author_result", {state:{key:searchKey}})
+    navigate("/author_result", {state:{key:searchKey, field: searchField}})
   }
 
 
@@ -83,52 +101,48 @@ export const AuthorPage = () => {
         sx={{ width: "84vw", ml: "16vw", bgcolor: "background.default"}}
       >
         <Toolbar>
-          <Typography variant="h6" noWrap component="div" color="black" fontFamily="monospace">
-            Author
-          </Typography>
+          <Box display='flex' flexGrow={1}>
+              <Typography variant="h6" noWrap component="div" color="black" fontFamily="monospace">
+                Author
+              </Typography>
+          </Box>
+          <Tabs value={tabValue} onChange={handleTabChange} aria-label="basic tabs example">
+            <Tab label="Search" value={"search"} sx={{textTransform: "none", fontFamily: "monospace", fontSize: 16}}/>
+            <Tab label="Trending Authors" value={"trending"}  sx={{textTransform: "none", fontFamily: "monospace", fontSize: 16}}/>
+         </Tabs>
         </Toolbar>
       </AppBar>
+      
       <Box
         display="flex"
         flexDirection="column"
-        justifyContent="center"
         alignItems="center"
         minHeight="100vh"
         minWidth="84vw"
       >
-        <Typography variant="h4" component="div" sx={{mt:10, mb:6}} fontFamily="monospace"> 
-          Start exploring authors
-        </Typography>
-        <SearchBar/>
-        <Box display="flex" flexDirection="row">
-          <Box sx={{boxShadow: 4,
-                    mt: 5, 
-                    mb: 5,
-                    borderRadius: 2, 
-                    height: "55vh", 
-                    width: "25vw", 
-                    display: "flex",
-                    flexDirection: "column"}}>
-            <Typography marginTop={2} mx="auto" marginBottom={3} fontFamily="monospace">Trending authors</Typography>
-            {popularAuthors? 
-             popularAuthors.map(x => <Link
-                                        fontFamily="monospace"
-                                        fontSize={14}
-                                        ml = "2vw"
-                                        marginBottom={1}
-                                        underline="hover"
-                                        onClick={() => navigate(`/author_info/${x.id.replace("https://openalex.org/", "")}`)}
-                                      >	• {x.display_name}
-                                      </Link>)
-            : <Typography
-                fontFamily="monospace"
-                fontSize={14}
-                mx="auto"
-                marginBottom={1}>
-                Loading
-              </Typography>}
-          </Box>
-        </Box>
+        
+        {tabValue == "search" ? 
+        (<>
+          <Typography variant="h4" component="div" sx={{mt: 25, mb:6}} fontFamily="monospace"> 
+            Start exploring authors
+          </Typography>
+          <SearchBar/>
+        </>) 
+        : 
+        (<Box display="flex" flexDirection="column" marginTop={10} marginBottom={6} width="70vw">
+          {popularAuthors? 
+           popularAuthors.map(x => <AuthorCard
+                                      name={x.display_name} 
+                                      id={x.id}
+                                      institution={x.institution? x.institution : "institution info unavailable"}/>)
+          : <Typography
+              fontFamily="monospace"
+              fontSize={14}
+              mx="auto"
+              marginBottom={1}>
+              Loading
+            </Typography>}
+      </Box>)}
         
       </Box>
     </Box>

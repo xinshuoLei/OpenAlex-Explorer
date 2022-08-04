@@ -39,30 +39,16 @@ ChartJS.register(
 export const AuthorInfoPage = () => {
 
     let { id }= useParams();
+    const author_id = "https://openalex.org/" + id;
     const navigate = useNavigate();
 
-    const authorInfo = {display_name: id, 
-                        works_count: 100,
-                        cited_by_count: 200,
-                        last_known_institution: "Institution 1"}
+    const [authorInfo, setAuthorInfo] = useState(false)
 
-    const institution = {display_name: "Insitution 1", id: "institution1"}
+    const [institution, setInstitution] = useState(false)
+    const [authorStats, setAuthorStats] = useState(false)
 
-    const ancestors = [{display_name: "Ancestor concept 1", id: "concept1"}, 
-                       {display_name: "Ancestor concept 2", id: "concept2"}, 
-                       {display_name: "Ancestor concept 3", id: "concept3"}]
-
-    const researchConcepts = [{display_name: "Concept 4", id: "concept4"}, 
-                              {display_name: "Concept 5", id: "concept5"}, 
-                              {display_name: "Concept 6", id: "concept6"},
-                              {display_name: "Concept 7", id: "concept7"},
-                              {display_name: "Concept 8", id: "concept8"}]
-
-    const topWorks = [{display_name: "Work 1", id: "work1"}, 
-                      {display_name: "Work 2", id: "work2"}, 
-                      {display_name: "Work 3", id: "work3"},
-                      {display_name: "Work 4", id: "work4"},
-                      {display_name: "Work 5", id: "work5"}]
+    const [topConcepts, setTopConcepts] = useState(false)
+    const [topWorks, setTopWorks] = useState(false)
     
     const similarAuthors = [{display_name: "Author 1", id: "author1"}, 
                         {display_name: "Author 2", id: "author2"}, 
@@ -70,24 +56,6 @@ export const AuthorInfoPage = () => {
                         {display_name: "Author 4", id: "author4"},
                         {display_name: "Author 5", id: "author5"}]
 
-    const labels = ["2019", "2020", "2021", "2022"]
-    const authorStats = {
-        labels,
-        datasets: [
-            {
-                label: 'cited by count',
-                data: [30, 50, 62, 20],
-                borderColor: 'rgb(53, 162, 235)',
-                backgroundColor: 'rgba(53, 162, 235, 0.5)',
-            },
-            {
-                label: 'works count',
-                data: [60, 91, 40, 73],
-                borderColor: 'rgb(144, 238, 144)',
-                backgroundColor: 'rgba(144, 238, 144, 0.5)',
-            }  
-        ]
-    }
     const options = {
         responsive: true,
         plugins: {
@@ -102,6 +70,92 @@ export const AuthorInfoPage = () => {
         maintainAspectRatio: false
     }
 
+    const getAuthorInfo = () => {
+        fetch( `http://localhost:3001/author_info?id=${author_id}`)
+        .then(response => {
+            return response.text();
+        })
+        .then(data => {
+            setAuthorInfo(JSON.parse("[" + data + "]")[0][0]);
+        });
+    }
+
+    const getInstitution = () => {
+        if (authorInfo.last_known_institution) {
+            fetch( `http://localhost:3001/institution_info?id=${authorInfo.last_known_institution}`)
+            .then(response => {
+                return response.text();
+            })
+            .then(data => {
+                setInstitution(JSON.parse("[" + data + "]")[0][0]);
+            });
+        }
+    }
+
+    useEffect(() => {
+        getAuthorInfo()
+        getStats()
+        getTopConcepts()
+        getTopWorks()
+    }, [id]);
+
+    useEffect(() => {
+        if (authorInfo) {
+            getInstitution()
+        }
+    }, [authorInfo]);
+
+    const getTopWorks = () => {
+        fetch( `http://localhost:3001/author_top_works?id=${author_id}`)
+        .then(response => {
+            return response.text();
+        })
+        .then(data => {
+            setTopWorks(JSON.parse("[" + data + "]")[0]);
+        });
+    }
+
+    const getTopConcepts = () => {
+        fetch( `http://localhost:3001/author_top_concepts?id=${author_id}`)
+        .then(response => {
+            return response.text();
+        })
+        .then(data => {
+            setTopConcepts(JSON.parse("[" + data + "]")[0]);
+        });
+    }
+
+    const getStats = () => {
+        fetch( `http://localhost:3001/author_stats?id=${author_id}`)
+          .then(response => {
+            return response.text();
+          })
+          .then(data => {
+            const rawStats = JSON.parse(data)
+            const labels = rawStats.years
+            const works_count = rawStats.works_count
+            const cited_by_count = rawStats.cited_by_count
+            const formattedStats = {
+                labels,
+                datasets: [
+                    {
+                        label: 'cited by count',
+                        data: cited_by_count,
+                        borderColor: 'rgb(53, 162, 235)',
+                        backgroundColor: 'rgba(53, 162, 235, 0.5)',
+                    },
+                    {
+                        label: 'works count',
+                        data: works_count,
+                        borderColor: 'rgb(144, 238, 144)',
+                        backgroundColor: 'rgba(144, 238, 144, 0.5)',
+                    }  
+                ]
+            }
+            console.log(formattedStats)
+            setAuthorStats(formattedStats)
+          });
+    }
 
     return (
         <Box sx={{ display: 'flex'}} >
@@ -124,7 +178,7 @@ export const AuthorInfoPage = () => {
               marginTop={15}
               marginBottom={10}
           > 
-        { authorInfo ? (
+        { authorInfo && authorStats ? (
             <Box
                 display="flex"
                 flexDirection="column"
@@ -157,7 +211,7 @@ export const AuthorInfoPage = () => {
                             my="auto"
                             underline="hover"
                             onClick={() => navigate(`/institution_info/${institution.id.replace("https://openalex.org/", "")}`)}
-                        >	{institution.display_name}
+                        >	{institution? institution.display_name : "institution info unavailable"}
                         </Link>
                     </Box>
                     <Box display="flex"
@@ -180,8 +234,9 @@ export const AuthorInfoPage = () => {
                     <Box sx={{boxShadow: 4,
                             borderRadius: 2, 
                             minHeight: "55vh", 
-                            width: "23vw", 
+                            width: "40vw", 
                             marginRight: 4,
+                            pb: 2,
                             display: "flex",
                             flexDirection: "column"}}>
                         <Typography marginTop={2} mx="auto" marginBottom={3} fontFamily="monospace">Top works</Typography>
@@ -190,6 +245,7 @@ export const AuthorInfoPage = () => {
                                                 fontFamily="monospace"
                                                 fontSize={14}
                                                 ml = "2vw"
+                                                mr = "2vw"
                                                 marginBottom={1}
                                                 underline="hover"
                                                 onClick={() => navigate(`/work_info/${x.id.replace("https://openalex.org/", "")}`)}
@@ -206,21 +262,21 @@ export const AuthorInfoPage = () => {
                     <Box sx={{boxShadow: 4,
                             borderRadius: 2, 
                             minHeight: "55vh", 
-                            width: "23vw", 
-                            marginRight: 4,
+                            width: "28vw", 
+                            //marginRight: 4,
                             display: "flex",
                             flexDirection: "column"}}>
                         <Typography marginTop={2} mx="auto" marginBottom={3} fontFamily="monospace">Primary research concepts</Typography>
-                        {researchConcepts? 
-                         researchConcepts.map(x => <Link
-                                                        fontFamily="monospace"
-                                                        fontSize={14}
-                                                        ml = "2vw"
-                                                        marginBottom={1}
-                                                        underline="hover"
-                                                        onClick={() => navigate(`/concept_info/${x.id.replace("https://openalex.org/", "")}`)}
-                                                    >	• {x.display_name}
-                                                    </Link>)
+                        {topConcepts? 
+                         topConcepts.map(x => <Link
+                                                    fontFamily="monospace"
+                                                    fontSize={14}
+                                                    ml = "2vw"
+                                                    marginBottom={1}
+                                                    underline="hover"
+                                                    onClick={() => navigate(`/concept_info/${x.id.replace("https://openalex.org/", "")}`)}
+                                                >	• {x.display_name}
+                                                </Link>)
                         : <Typography
                             fontFamily="monospace"
                             fontSize={14}
@@ -229,6 +285,7 @@ export const AuthorInfoPage = () => {
                             Loading
                         </Typography>}
                     </Box>
+                    {/** 
                     <Box sx={{boxShadow: 4,
                             borderRadius: 2, 
                             minHeight: "55vh", 
@@ -254,6 +311,7 @@ export const AuthorInfoPage = () => {
                             Loading
                         </Typography>}
                     </Box>
+                         */}
                 </Box>
                 <Box marginTop={5}
                      display="flex"

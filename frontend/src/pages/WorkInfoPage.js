@@ -39,79 +39,119 @@ ChartJS.register(
 export const WorkInfoPage = () => {
 
     let { id }= useParams();
+    const work_id = "https://openalex.org/" + id;
     const navigate = useNavigate();
 
-    const workInfo = { description: "this is a fake concept",
-                       display_name: id, 
-                       type: "peer-review",
-                       cited_by_count: 100,
-                       host_venue: "Venue 1",
-                       retracted: true,
-                       paratext: true,
-                       publication_year: 2022
-                    }
-    const authors = [{display_name: "author 1", id: "concept1"}]
+    const [workInfo, setWorkInfo] = useState(false) 
+    const [authors, setAuthors] = useState(false)
+    const [concepts, setConcepts] = useState(false)
 
-    const concepts = [{display_name: "Concept 1", id: "concept1"}, 
-                      {display_name: "Concept 2", id: "concept2"}, 
-                      {display_name: "Concept 3", id: "concept3"},
-                      {display_name: "Concept 4", id: "concept4"},
-                      {display_name: "Concept 5", id: "concept5"}]
-
-    const relatedWorks = [{display_name: "Work 1", id: "work1"}, 
-                          {display_name: "Work 2", id: "work2"}, 
-                          {display_name: "Work 3", id: "work3"},
-                          {display_name: "Work 4", id: "work4"},
-                          {display_name: "Work 5", id: "work5"}]
+    const [relatedWorks, setRelatedWorks] = useState(false)
+    const [referencedWorks, setReferencedWorks] = useState(false)
     
-    const referencedWorks = [{display_name: "Work 1", id: "work1"}, 
-                             {display_name: "Work 2", id: "work2"}, 
-                             {display_name: "Work 3", id: "work3"},
-                             {display_name: "Work 4", id: "work4"},
-                             {display_name: "Work 5", id: "work5"}]
 
-    const topWorksSameAuthor = [{display_name: "Work 1", id: "work1"}, 
-                                {display_name: "Work 2", id: "work2"}, 
-                                {display_name: "Work 3", id: "work3"},
-                                {display_name: "Work 4", id: "work4"},
-                                {display_name: "Work 5", id: "work5"}]
+    const [topWorksSameAuthor, setTopWorksSameAuthor] = useState(false)
 
-    const topWorksSameConcept = [{display_name: "Work 1", id: "work1"}, 
-                                 {display_name: "Work 2", id: "work2"}, 
-                                 {display_name: "Work 3", id: "work3"},
-                                 {display_name: "Work 4", id: "work4"},
-                                 {display_name: "Work 5", id: "work5"}]
-    
-    const labels = ["2019", "2020", "2021", "2022"]
-    const conceptsStats = {
-        labels,
-        datasets: [
-            {
-                label: 'cited by count',
-                data: [30, 50, 62, 20],
-                borderColor: 'rgb(53, 162, 235)',
-                backgroundColor: 'rgba(53, 162, 235, 0.5)',
-            },
-            {
-                label: 'works count',
-                data: [60, 91, 40, 73],
-                borderColor: 'rgb(144, 238, 144)',
-                backgroundColor: 'rgba(144, 238, 144, 0.5)',
-            }  
-        ]
+    const [topWorksSameConcept, setTopWorksSameConcept] = useState(false)
+
+    useEffect(() => {
+        getWorkInfo()
+        getAuthors()
+        getConcepts()
+        getReferencedWorks()
+        getRelatedWorks()
+    }, [id]);
+
+    useEffect(() => {
+        if (authors) {
+            getTopWorksSameAuthor()
+        }
+    }, [authors]);
+
+    useEffect(() => {
+        if (concepts) {
+            getTopWorksSameConcept()
+        }
+    }, [concepts]);
+
+    const getWorkInfo = () => {
+        fetch( `http://localhost:3001/work_info?id=${work_id}`)
+        .then(response => {
+            return response.text();
+        })
+        .then(data => {
+            setWorkInfo(JSON.parse("[" + data + "]")[0][0]);
+        });
     }
-    const options = {
-        responsive: true,
-        plugins: {
-          legend: {
-            position: 'top'
-          },
-          title: {
-            display: true,
-            text: 'Concept Stats',
-          },
-        },
-        maintainAspectRatio: false
+
+    const getAuthors = () => {
+        fetch( `http://localhost:3001/work_author?id=${work_id}`)
+        .then(response => {
+            return response.text();
+        })
+        .then(data => {
+            setAuthors(JSON.parse("[" + data + "]")[0]);
+        });
+    }
+
+    const getConcepts = () => {
+        fetch( `http://localhost:3001/work_concept?id=${work_id}`)
+        .then(response => {
+            return response.text();
+        })
+        .then(data => {
+            setConcepts(JSON.parse("[" + data + "]")[0]);
+        });
+    }
+
+    const getReferencedWorks = () => {
+        fetch( `http://localhost:3001/work_referenced?id=${work_id}`)
+        .then(response => {
+            return response.text();
+        })
+        .then(data => {
+            setReferencedWorks(JSON.parse("[" + data + "]")[0]);
+        });
+    }
+
+    const getRelatedWorks = () => {
+        fetch( `http://localhost:3001/work_related?id=${work_id}`)
+        .then(response => {
+            return response.text();
+        })
+        .then(data => {
+            setRelatedWorks(JSON.parse("[" + data + "]")[0]);
+        });
+    }
+
+    const getTopWorksSameAuthor = () => {
+        if (authors && authors.length != 0) {
+            const author_ids = authors.map(x => `'${x.id}'`)
+            fetch( `http://localhost:3001/work_same_author?authors=${author_ids.join()}`)
+            .then(response => {
+                return response.text();
+            })
+            .then(data => {
+                setTopWorksSameAuthor(JSON.parse("[" + data + "]")[0]);
+            });
+        } else {
+            setTopWorksSameAuthor([])
+        }
+    }
+
+    const getTopWorksSameConcept = () => {
+        if (concepts && concepts.length != 0) {
+            const concept_ids = concepts.map(x => `'${x.id}'`)
+            fetch( `http://localhost:3001/work_same_concept?concepts=${concept_ids.join()}`)
+            .then(response => {
+                return response.text();
+            })
+            .then(data => {
+                setTopWorksSameConcept(JSON.parse("[" + data + "]")[0]);
+            });
+        } else {
+            setTopWorksSameConcept([])
+        }
     }
 
 
@@ -136,7 +176,7 @@ export const WorkInfoPage = () => {
               marginTop={15}
               marginBottom={10}
           > 
-        { workInfo ? (
+        { workInfo && authors && concepts ? (
             <Box
                 display="flex"
                 flexDirection="column"
@@ -221,10 +261,10 @@ export const WorkInfoPage = () => {
                             • host venue: {workInfo.host_venue}
                         </Typography>
                         <Typography fontSize={14} ml="2vw" mb={2} fontFamily="monospace">
-                            • retracted: {workInfo.retracted.toString()}
+                            • retracted: {workInfo.is_retracted? workInfo.is_retracted.toString() : "N/A"}
                         </Typography>
                         <Typography fontSize={14} ml="2vw" mb={2} fontFamily="monospace">
-                            • paratext {workInfo.paratext.toString()}
+                            • paratext {workInfo.is_paratext? workInfo.is_paratext.toString() : "N/A"}
                         </Typography>
                     </Box>
                     <Box sx={{boxShadow: 4,
@@ -287,9 +327,10 @@ export const WorkInfoPage = () => {
                 >
                     <Box sx={{boxShadow: 4,
                             borderRadius: 2, 
-                            height: "55vh", 
-                            width: "25vw", 
+                            minheight: "55vh", 
+                            width: "35vw", 
                             marginRight: 4,
+                            pb: 2,
                             display: "flex",
                             flexDirection: "column"}}>
                         <Typography marginTop={2} mx="auto" marginBottom={3} fontFamily="monospace">Top works by same author</Typography>
@@ -298,6 +339,7 @@ export const WorkInfoPage = () => {
                                                     fontFamily="monospace"
                                                     fontSize={14}
                                                     ml = "2vw"
+                                                    mr = "2vw"
                                                     marginBottom={1}
                                                     underline="hover"
                                                     onClick={() => navigate(`/work_info/${x.id.replace("https://openalex.org/", "")}`)}
@@ -314,7 +356,8 @@ export const WorkInfoPage = () => {
                     <Box sx={{boxShadow: 4,
                             borderRadius: 2, 
                             minHeight: "55vh", 
-                            width: "25vw", 
+                            width: "35vw", 
+                            pb: 2,
                             display: "flex",
                             flexDirection: "column"}}>
                         <Typography marginTop={2} mx="auto" marginBottom={3} fontFamily="monospace">Top works in same concept</Typography>
@@ -323,6 +366,7 @@ export const WorkInfoPage = () => {
                                                             fontFamily="monospace"
                                                             fontSize={14}
                                                             ml = "2vw"
+                                                            mr = "2vw"
                                                             marginBottom={1}
                                                             underline="hover"
                                                             onClick={() => navigate(`/work_info/${x.id.replace("https://openalex.org/", "")}`)}

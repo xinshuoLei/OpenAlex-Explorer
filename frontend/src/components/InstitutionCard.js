@@ -11,7 +11,7 @@ import {
 } from '@mui/material'
 import { useNavigate } from 'react-router-dom';
 
-export const InstitutionCard = ({id, name, type}) => {
+export const InstitutionCard = ({id, name, type, works_count, cited_by_count, country}) => {
     const navigate = useNavigate()
     return (
         <Box 
@@ -24,6 +24,7 @@ export const InstitutionCard = ({id, name, type}) => {
             >
             <Link variant="h6" fontFamily="monospace" onClick={() => navigate(`/institution_info/${id.replace("https://openalex.org/", "")}`)}>{name}</Link>
             <Typography fontFamily="monospace" color="gray" marginTop={1}>{type}</Typography>
+            <Typography fontFamily="monospace" color="gray" marginTop={1}>{country}</Typography>
         </Box>
     )
 }

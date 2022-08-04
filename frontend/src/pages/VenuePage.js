@@ -6,6 +6,8 @@ import {
   Toolbar,
   Typography,
   Divider,
+  Tabs,
+  Tab,
   InputLabel,
   MenuItem,
   Select,
@@ -18,22 +20,38 @@ import SearchIcon from "@mui/icons-material/Search";
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom';
+import { VenueCard } from '../components/VenueCard'
 
 
 export const VenuePage = () => {
 
   const navigate = useNavigate();
-  const popularVenues = [{display_name: "Venue 1", id: "venue1"}, 
-                         {display_name: "Venue 2", id: "venue2"}, 
-                         {display_name: "Venue 3", id: "venue3"},
-                         {display_name: "Venue 4", id: "venue4"},
-                         {display_name: "Venue 5", id: "venue5"}]
+  const [ popularVenues, setPopularVenues ] = useState(false)
 
   const { register, handleSubmit } = useForm()
-  const [ searchField, setSearchField ] = useState("")
+  const [ searchField, setSearchField ] = useState("display_name")
   const handleSearchFieldChange = (event) => {
     setSearchField(event.target.value);
   };
+
+  const [ tabValue, setTabValue ] = useState("search")
+  const handleTabChange = (event, newValue) => {
+    setTabValue(newValue)
+  }
+
+  useEffect(() => {
+    getPopularVenues();
+  }, []);
+
+  const getPopularVenues = () => {
+    fetch( `http://localhost:3001/trending_venues`)
+      .then(response => {
+        return response.text();
+      })
+      .then(data => {
+        setPopularVenues(JSON.parse("[" + data + "]")[0]);
+      });
+  }
 
   const SearchBar = () => (
     <form onSubmit={handleSubmit(performSearch)}>
@@ -44,11 +62,11 @@ export const VenuePage = () => {
           id="demo-simple-select"
           label="Search field"
           value={searchField}
-          style={{width: "10vw", height: "5.5vh", marginRight: "2vw"}}
+          style={{width: "10vw", height: "42px", marginRight: "2vw"}}
           onChange={handleSearchFieldChange}
         >
           <MenuItem value={"display_name"}>name</MenuItem>
-          <MenuItem value={"issn"}>ISSN</MenuItem>
+          <MenuItem value={"issn_l"}>ISSN-L</MenuItem>
         </Select>
       </FormControl>
       <TextField
@@ -69,7 +87,7 @@ export const VenuePage = () => {
   const performSearch = (data) => {
     console.log(data.key)
     const searchKey = data.key;
-    navigate("/venue_result", {state:{key:searchKey}})
+    navigate("/venue_result", {state:{key:searchKey, field:searchField}})
   }
 
 
@@ -82,52 +100,48 @@ export const VenuePage = () => {
         sx={{ width: "84vw", ml: "16vw", bgcolor: "background.default"}}
       >
         <Toolbar>
-          <Typography variant="h6" noWrap component="div" color="black" fontFamily="monospace">
-            Venue
-          </Typography>
+          <Box display='flex' flexGrow={1}>
+              <Typography variant="h6" noWrap component="div" color="black" fontFamily="monospace">
+                Venue
+              </Typography>
+          </Box>
+          <Tabs value={tabValue} onChange={handleTabChange} aria-label="basic tabs example">
+            <Tab label="Search" value={"search"} sx={{textTransform: "none", fontFamily: "monospace", fontSize: 16}}/>
+            <Tab label="Trending Venues" value={"trending"}  sx={{textTransform: "none", fontFamily: "monospace", fontSize: 16}}/>
+         </Tabs>
         </Toolbar>
       </AppBar>
+      
       <Box
         display="flex"
         flexDirection="column"
-        justifyContent="center"
         alignItems="center"
         minHeight="100vh"
         minWidth="84vw"
       >
-        <Typography variant="h4" component="div" sx={{mt:10, mb:6}} fontFamily="monospace"> 
-          Start exploring venues
-        </Typography>
-        <SearchBar/>
-        <Box display="flex" flexDirection="row">
-          <Box sx={{boxShadow: 4,
-                    mt: 5, 
-                    mb: 5,
-                    borderRadius: 2, 
-                    height: "55vh", 
-                    width: "25vw", 
-                    display: "flex",
-                    flexDirection: "column"}}>
-            <Typography marginTop={2} mx="auto" marginBottom={3} fontFamily="monospace">Trending venues</Typography>
-            {popularVenues? 
-             popularVenues.map(x => <Link
-                                        fontFamily="monospace"
-                                        fontSize={14}
-                                        ml = "2vw"
-                                        marginBottom={1}
-                                        underline="hover"
-                                        onClick={() => navigate(`/venue_info/${x.id.replace("https://openalex.org/", "")}`)}
-                                      >	• {x.display_name}
-                                      </Link>)
-            : <Typography
-                fontFamily="monospace"
-                fontSize={14}
-                mx="auto"
-                marginBottom={1}>
-                Loading
-              </Typography>}
-          </Box>
-        </Box>
+        
+        {tabValue == "search" ? 
+        (<>
+          <Typography variant="h4" component="div" sx={{mt: 25, mb:6}} fontFamily="monospace"> 
+            Start exploring venues
+          </Typography>
+          <SearchBar/>
+        </>) 
+        : 
+        (<Box display="flex" flexDirection="column" marginTop={10} marginBottom={6} width="70vw">
+          {popularVenues? 
+           popularVenues.map(x => <VenueCard
+                                    name={x.display_name} 
+                                    id={x.id}
+                                    publisher={x.publisher? x.publisher : "publisher info unavailable"} />)
+          : <Typography
+              fontFamily="monospace"
+              fontSize={14}
+              mx="auto"
+              marginBottom={1}>
+              Loading
+            </Typography>}
+      </Box>)}
         
       </Box>
     </Box>

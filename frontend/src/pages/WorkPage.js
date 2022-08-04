@@ -24,7 +24,7 @@ export const WorkPage = () => {
 
   const navigate = useNavigate();
   const { register, handleSubmit } = useForm()
-  const [ searchField, setSearchField ] = useState("")
+  const [ searchField, setSearchField ] = useState("display_name")
   const handleSearchFieldChange = (event) => {
     setSearchField(event.target.value);
   };
@@ -38,10 +38,10 @@ export const WorkPage = () => {
           id="demo-simple-select"
           label="Search field"
           value={searchField}
-          style={{width: "10vw", height: "5.5vh", marginRight: "2vw"}}
+          style={{width: "10vw", height: "42px", marginRight: "2vw"}}
           onChange={handleSearchFieldChange}
         >
-          <MenuItem value={"display"}>title</MenuItem>
+          <MenuItem value={"display_name"}>title</MenuItem>
           <MenuItem value={"description"}>doi</MenuItem>
         </Select>
       </FormControl>
@@ -63,7 +63,7 @@ export const WorkPage = () => {
   const performSearch = (data) => {
     console.log(data.key)
     const searchKey = data.key;
-    navigate("/work_result", {state:{key:searchKey}})
+    navigate("/work_result", {state:{key:searchKey, field: searchField}})
   }
 
 
