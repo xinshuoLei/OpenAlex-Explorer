@@ -214,7 +214,7 @@ export const WorkInfoPage = () => {
                               mr="2vw"
                               my="auto"
                               underline="hover"
-                              onClick={() => navigate(`/concept_info/${x.id.replace("https://openalex.org/", "")}`)}
+                              onClick={() => navigate(`/author_info/${x.id.replace("https://openalex.org/", "")}`)}
                             >	{x.display_name}
                             </Link>)}
                         </Box>

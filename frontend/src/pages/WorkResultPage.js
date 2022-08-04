@@ -22,10 +22,13 @@ import { useLocation } from 'react-router-dom'
 import { ConceptCard } from '../components/ConceptCard';
 import { fontFamily } from '@mui/system';
 import { WorkCard } from '../components/WorkCard';
+import { FormProvider, useForm } from 'react-hook-form'
 
 export const WorkResultPage = () => {
   const [searchResult, setSearchResult] = useState(false)
   const [filteredResult,  setFilteredResult] = useState(false)
+
+  const { register, handleSubmit } = useForm()
 
   const workTypes = [{id:"book-section",label:"Book Section"}, {id:"monograph",label:"Monograph"},
                       {id:"report",label:"Report"},{id:"peer-review",label:"Peer Review"},
@@ -49,6 +52,9 @@ export const WorkResultPage = () => {
     const [sortField, setSortField] = useState("relevant")
     const handleSortFieldChange = (event) => {
       setSortField(event.target.value);
+      const sortedResult = sortResult(searchResult, event.target.value)
+      setFilteredResult(sortedResult)
+      console.log(sortedResult.slice(0,10))
     };
 
     const [type, setType] = useState("any")
@@ -59,6 +65,41 @@ export const WorkResultPage = () => {
     useEffect(() => {
       performSearch();
     }, []);
+
+    const sortResult = (result, field) => {
+      console.log(field)
+      switch (field) {
+        case "cited_asc":
+          return result.slice().sort((a, b) => (a.cited_by_count > b.cited_by_count ? 1 : -1))
+        case "cited_des":
+          return result.slice().sort((a, b) => (a.cited_by_count < b.cited_by_count ? 1 : -1)) 
+        case "date_asc":
+          return result.slice().sort((a, b) => (a.publication_year > b.publication_year ? 1 : -1))
+        case "date_des":
+          return result.slice().sort((a, b) => (a.publication_year < b.publication_year ? 1 : -1))  
+        default: 
+          return result;
+      }
+    }
+
+    const filterResult = (data, e) => {
+      console.log(data)
+      const cited_min = data.citedMin && data.citedMin.length != 0 ? parseInt(data.citedMin) : 0
+      const cited_max = data.citedMax && data.citedMax.length != 0 ? parseInt(data.citedMax) : Number.MAX_SAFE_INTEGER
+      const start_year = data.startYear && data.startYear.length != 0 ? parseInt(data.startYear) : 0
+      const end_year = data.endYear && data.endYear.length != 0 ? parseInt(data.endYear) : Number.MAX_SAFE_INTEGER
+      const filter_type = type == "any" ? "" : type 
+      const filtered = searchResult.filter(x =>   x.cited_by_count >= cited_min
+                                                  && x.cited_by_count <= cited_max
+                                                  && x.publication_year >= start_year
+                                                  && x.publication_year <= end_year
+                                                  && x.type 
+                                                  && x.type.includes(filter_type)
+                                                  && x.is_retracted == data.retracted
+                                                  && x.is_paratext == data.paratext)
+      console.log(filtered)
+      setFilteredResult(sortResult(filtered, sortField))
+    }
   
     const performSearch = () => {
       fetch( `http://localhost:3001/work_result?key=${encodeURIComponent(key)}&field=${searchField}`)
@@ -122,80 +163,89 @@ export const WorkResultPage = () => {
                       px={4}
                       marginLeft={10}
                   >   
-                    <FormControl>
-                      <InputLabel id="demo-simple-select-label" >Sort by</InputLabel>
-                      <Select
-                        labelId="demo-simple-select-label"
-                        id="demo-simple-select"
-                        label="Sort by"
-                        value={sortField}
-                        style={{width: "14vw", height: "5.5vh", fontSize: 14}}
-                        onChange={handleSortFieldChange}
-                      >
-                        <MenuItem value={"relevant"}>Most Relevant</MenuItem>
-                        <MenuItem value={"date_asc"}>Publication date: ascending</MenuItem>
-                        <MenuItem value={"date_des"}>Publication date: descending</MenuItem>
-                        <MenuItem value={"work_asc"}>Works count: ascending</MenuItem>
-                        <MenuItem value={"work_des"}>Works count: descending</MenuItem>
-                        <MenuItem value={"cited_asc"}>Cited by count: ascending</MenuItem>
-                        <MenuItem value={"cited_des"}>Cited by count: descending</MenuItem>
-                      </Select>
-                    </FormControl>
-                    <Typography fontFamily="monospace" marginTop={5}>Updated date</Typography>
-                    <Box width="100%"  display="flex" flexDirection="row" marginTop={1} alignItems="center" justifyContent="center">
-                      <TextField
-                        id="date"
-                        label="start year"
-                        size='small'
-                        sx={{ width: 100, height:20 }}
-                      />
-                       <Typography fontFamily="monospace" marginLeft={1} marginRight={1} marginTop={2}>-</Typography>
-                      <TextField
-                        id="date"
-                        label="end year"
-                        size='small'
-                        sx={{ width: 100, height:20 }}
-                      />
-                    </Box>
-                    <Typography fontFamily="monospace" marginTop={5}>Cited by count</Typography>
-                    <Box width="100%"  display="flex" flexDirection="row" marginTop={1} alignItems="center" justifyContent="center">
-                      <TextField
-                        id="date"
-                        label="min"
-                        size='small'
-                        sx={{ width: 100, height:20 }}
-                      />
-                       <Typography fontFamily="monospace" marginLeft={1} marginRight={1} marginTop={2}>-</Typography>
-                      <TextField
-                        id="date"
-                        label="max"
-                        size='small'
-                        sx={{ width: 100, height:20 }}
-                      />
-                    </Box>
-                    <Typography fontFamily="monospace" marginTop={5} marginBottom={2}>Type</Typography>
-                    <FormControl>
-                      <Select
-                        id="demo-simple-select"
-                        style={{width: "14vw", height: "5.5vh", fontSize: 14}}
-                        value={type}
-                        onChange={handleTypeChange}
-                      >
-                        <MenuItem value={"any"}>Any</MenuItem>
-                        {workTypes.map(x => <MenuItem value={x.id}>
-                                              {x.label}
-                                            </MenuItem>)}
-                      </Select>
-                    </FormControl>
-                    <FormControlLabel 
-                      control={<Checkbox />} 
-                      label={<Typography fontFamily="monospace">retracted</Typography>} 
-                      sx={{marginTop: 3}}/>
-                    <FormControlLabel 
-                      control={<Checkbox />} 
-                      label={<Typography fontFamily="monospace">paratext</Typography>} 
-                      sx={{marginTop: 1}}/>
-                    <Button variant='outlined' sx={{marginTop:10, width: "14vw"}}>Apply filters</Button>
+                    <form onSubmit={handleSubmit(filterResult)}>
+                      <FormControl>
+                        <InputLabel id="demo-simple-select-label" >Sort by</InputLabel>
+                        <Select
+                          labelId="demo-simple-select-label"
+                          id="demo-simple-select"
+                          label="Sort by"
+                          value={sortField}
+                          style={{width: "14vw", height: "5.5vh", fontSize: 14}}
+                          onChange={handleSortFieldChange}
+                        >
+                          <MenuItem value={"relevant"}>Most Relevant</MenuItem>
+                          <MenuItem value={"date_asc"}>Publication date: ascending</MenuItem>
+                          <MenuItem value={"date_des"}>Publication date: descending</MenuItem>
+                          <MenuItem value={"cited_asc"}>Cited by count: ascending</MenuItem>
+                          <MenuItem value={"cited_des"}>Cited by count: descending</MenuItem>
+                        </Select>
+                      </FormControl>
+                      <Typography fontFamily="monospace" marginTop={5}>Publication_year</Typography>
+                      <Box width="100%"  display="flex" flexDirection="row" marginTop={1} alignItems="center" justifyContent="center">
+                        <TextField
+                          id="date"
+                          label="start year"
+                          size='small'
+                          sx={{ width: 100, height:20 }}
+                          {...register("startYear")}
+                        />
+                        <Typography fontFamily="monospace" marginLeft={1} marginRight={1} marginTop={2}>-</Typography>
+                        <TextField
+                          id="date"
+                          label="end year"
+                          size='small'
+                          sx={{ width: 100, height:20 }}
+                          {...register("endYear")}
+                        />
+                      </Box>
+                      <Typography fontFamily="monospace" marginTop={5}>Cited by count</Typography>
+                      <Box width="100%"  display="flex" flexDirection="row" marginTop={1} alignItems="center" justifyContent="center">
+                        <TextField
+                          id="date"
+                          label="min"
+                          size='small'
+                          {...register("citedMin")}
+                          sx={{ width: 100, height:20 }}
+                        />
+                        <Typography fontFamily="monospace" marginLeft={1} marginRight={1} marginTop={2}>-</Typography>
+                        <TextField
+                          id="date"
+                          label="max"
+                          size='small'
+                          {...register("citedMax")}
+                          sx={{ width: 100, height:20 }}
+                        />
+                      </Box>
+                      <Typography fontFamily="monospace" marginTop={5} marginBottom={2}>Type</Typography>
+                      <FormControl>
+                        <Select
+                          id="demo-simple-select"
+                          style={{width: "14vw", height: "5.5vh", fontSize: 14}}
+                          value={type}
+                          onChange={handleTypeChange}
+                        >
+                          <MenuItem value={"any"}>Any</MenuItem>
+                          {workTypes.map(x => <MenuItem value={x.id}>
+                                                {x.id}
+                                              </MenuItem>)}
+                        </Select>
+                      </FormControl>
+                      <div></div>
+                      <FormControlLabel 
+                        control={<Checkbox />} 
+                        label={<Typography fontFamily="monospace">retracted</Typography>} 
+                        sx={{marginTop: 3}}
+                        {...register("retracted")}/>
+                      <div></div>
+                      <FormControlLabel 
+                        control={<Checkbox />} 
+                        label={<Typography fontFamily="monospace">paratext</Typography>} 
+                        sx={{marginTop: 1}}
+                        {...register("paratext")}/>
+                      <div></div>
+                      <Button variant='outlined' sx={{marginTop:10, width: "14vw"}} type="submit">Apply filters</Button>
+                    </form>
                   </Box>
                 </Box>
             </Box>
