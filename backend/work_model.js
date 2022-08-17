@@ -1,11 +1,17 @@
 const connection = require('./connection')
 
 const searchWork =  (field, key) => {
-  const query = `SELECT id, display_name, cited_by_count, is_retracted, is_paratext, type, publication_year
-                 FROM openalex.works
-                 WHERE ${field} ILIKE '%${key}%' 
-                 ORDER BY (${field} ILIKE '%${key}%')::integer DESC
-                 LIMIT 100`
+  var query = `SELECT id, display_name, cited_by_count, is_retracted, is_paratext, type, publication_year
+               FROM openalex.works
+               WHERE ${field} ILIKE '%${key}%' 
+               ORDER BY (${field} ILIKE '%${key}%')::integer DESC
+               LIMIT 100`
+  if (field === 'display_name') {
+    query = `SELECT id, display_name, cited_by_count, is_retracted, is_paratext, type, publication_year
+             FROM openalex.works
+             WHERE english_ts @@ phraseto_tsquery('english', '${key}')
+             LIMIT 100;`
+  }
   return connection.runQuery(query)
 }
 

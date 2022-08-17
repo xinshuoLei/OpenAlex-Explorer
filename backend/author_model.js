@@ -1,11 +1,17 @@
 const connection = require('./connection')
 
 const searchAuthors =  (field, key) => {
-  const query = `SELECT au.id, au.display_name, au.cited_by_count, au.works_count, i.display_name AS institution
+  var query = `SELECT au.id, au.display_name, au.cited_by_count, au.works_count, i.display_name AS institution
                  FROM openalex.authors au JOIN openalex.institutions i ON i.id = au.last_known_institution
                  WHERE au.${field} ILIKE '%${key}%' 
                  ORDER BY (au.${field}  ILIKE '${key}')::integer DESC
                  LIMIT 100`
+  if (field === 'display_name') {
+    query = `SELECT au.id, au.display_name, au.cited_by_count, au.works_count, i.display_name AS institution
+             FROM openalex.authors au JOIN openalex.institutions i ON i.id = au.last_known_institution
+             WHERE english_ts_name @@ phraseto_tsquery('english', '${key}')
+             LIMIT 100`
+  }
   return connection.runQuery(query)
 }
 
