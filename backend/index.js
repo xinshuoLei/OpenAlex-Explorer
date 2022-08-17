@@ -11,11 +11,11 @@ app.use(function (req, res, next) {
 });
 
 
-const concept_model = require('./concept_model')
-const institutions_model = require('./institution_model')
-const venue_model = require('./venue_model')
-const work_model = require('./work_model')
-const author_model = require('./author_model')
+const concept_model = require('./entity_models/concept_model')
+const institutions_model = require('./entity_models/institution_model')
+const venue_model = require('./entity_models/venue_model')
+const work_model = require('./entity_models/work_model')
+const author_model = require('./entity_models/author_model')
 
 
 

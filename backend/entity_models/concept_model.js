@@ -1,4 +1,4 @@
-const connection = require('./connection')
+const connection = require('../connection')
 
 const searchConcepts =  (field, key) => {
   const query = `SELECT id, display_name, description, updated_date, works_count, cited_by_count, level
