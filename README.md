@@ -122,7 +122,7 @@ Describe all functions / classes that will be available to users of your module.
 
 2. Display detail for each entity
     - For concepts, display name, description, link to wikipedia (1044/65073 concepts don’t have a wikipedia link), works count, cited by count, image (29318/65073 concepts don’t have an image), ancestors, updated date, and related concepts.
-    - For works, display title, publication date, type, cited by count, author, host venue (including volume, issue, pages, etc.), alternate host venues, concepts, related works, and referenced works, is_retracted, is_paratext, and is_oa.
+    - For works, display title, publication date, type, cited by count, author, host venue (including volume, issue, pages, etc.), alternate host venues, concepts, related works, and referenced works.
     - For authors, display name, name_alternatives, works count, cited by count, last known institution, twitter (only available for 346 authors), wikipedia (only available for 377 authors)
     - For venues, display name, ISSN, publisher, works count, cited by count, is_oa, is_in_doaj, homepage_url (only available for 6426/124066 venue)
     - For institutions, display ror, location, type, homepage url (2810/108660 institution missing homepage url), image (only available for 26545/108660 institutions), works count, cited by count, wikipedia (available for 41691/108660 institutions), and associated institutions.
@@ -148,7 +148,10 @@ Describe all functions / classes that will be available to users of your module.
 <!---
 Make sure to include a video showing your module in action and how to use it in this section. Github Pages doesn't support this so I am unable to do this here. However, this can be done in your README.md files of your own repo. Follow instructions [here](https://stackoverflow.com/questions/4279611/how-to-embed-a-video-into-github-readme-md) of the accepted answer 
 -->
-to be updated
+
+
+[![Watch the video](https://user-images.githubusercontent.com/89936983/186773984-50d5e943-7116-42ad-85c4-78475776df57.png)
+](https://drive.google.com/file/d/18eu4_kkP-u7Zh96L23YXgYX5voRoYQqZ/view?usp=sharing)
 
 ## Algorithmic Design 
 <!---
