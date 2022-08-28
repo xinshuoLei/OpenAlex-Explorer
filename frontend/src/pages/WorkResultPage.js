@@ -94,9 +94,7 @@ export const WorkResultPage = () => {
                                                   && x.publication_year >= start_year
                                                   && x.publication_year <= end_year
                                                   && x.type 
-                                                  && x.type.includes(filter_type)
-                                                  && x.is_retracted == data.retracted
-                                                  && x.is_paratext == data.paratext)
+                                                  && x.type.includes(filter_type))
       console.log(filtered)
       setFilteredResult(sortResult(filtered, sortField))
     }
@@ -231,18 +229,6 @@ export const WorkResultPage = () => {
                                               </MenuItem>)}
                         </Select>
                       </FormControl>
-                      <div></div>
-                      <FormControlLabel 
-                        control={<Checkbox />} 
-                        label={<Typography fontFamily="monospace">retracted</Typography>} 
-                        sx={{marginTop: 3}}
-                        {...register("retracted")}/>
-                      <div></div>
-                      <FormControlLabel 
-                        control={<Checkbox />} 
-                        label={<Typography fontFamily="monospace">paratext</Typography>} 
-                        sx={{marginTop: 1}}
-                        {...register("paratext")}/>
                       <div></div>
                       <Button variant='outlined' sx={{marginTop:10, width: "14vw"}} type="submit">Apply filters</Button>
                     </form>

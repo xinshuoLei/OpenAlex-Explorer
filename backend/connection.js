@@ -11,7 +11,7 @@ const runQuery = (query) => {
     return new Promise(function(resolve, reject) {
         pool.query(query, 
           (error, results) => {
-          console.log(error,results)
+          //console.log(error,results)
           if (error) {
             reject(error)
           }
