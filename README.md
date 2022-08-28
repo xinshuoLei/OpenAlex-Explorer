@@ -77,6 +77,23 @@ Include text description of all the important files / componenets in your repo.
 ### Additional Setup
 1. Follow the steps on [OpenAlex's website](https://docs.openalex.org/download-snapshot/upload-to-your-database/load-to-a-relational-database) to download the snapshot and upload the dataset into a PostgreSQL database
 2. Update the database info in `backend/connection.js` to connect the backend to your PostgreSQL database
+3. The backend of this module utilizes [PostgreSQL's full text search](https://www.postgresql.org) for authors and works. Run the following queries in order after you have finished setting up the database.
+
+	```sql
+	--author
+	ALTER TABLE openalex.authors 
+	ADD COLUMN english_ts_name tsvector 
+	GENERATED ALWAYS AS (to_tsvector('english', display_name)) STORED;
+
+	CREATE INDEX author_ts_idx ON openalex.authors USING GIN (english_ts_name);
+
+	--work
+	ALTER TABLE openalex.works 
+	ADD COLUMN english_ts tsvector 
+	GENERATED ALWAYS AS (to_tsvector('english', display_name)) STORED;
+
+	CREATE INDEX work_ts_idx ON se_details USING GIN (english_ts);
+	```
 
 ### Running the app
 - To start the backend API server, go to `backend/` and run `node index.js`
